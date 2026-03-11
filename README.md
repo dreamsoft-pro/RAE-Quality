@@ -1,22 +1,22 @@
-# RAE-Quality: Autonomiczny Strażnik Jakości i Bezpieczeństwa 🛡️
+# RAE-Quality: Autonomous Quality & Security Guard 🛡️
 
-RAE-Quality to moduł audytowy wewnątrz stosu RAE-Suite, zaprojektowany do ciągłego monitorowania, testowania i zabezpieczania kodu źródłowego produktów inżynieryjnych.
+RAE-Quality is an auditing module within the RAE-Suite stack, designed for continuous monitoring, testing, and securing the source code of engineering products.
 
-## 🛠️ Silniki Audytowe
-Moduł wykorzystuje podejście wielowarstwowe (Multi-Engine) do oceny kodu:
+## 🛠️ Audit Engines
+The module uses a multi-layered (Multi-Engine) approach to code evaluation:
 
-1.  **SAST (Static Analysis)**: Zintegrowany silnik **Bandit** wykrywający luki bezpieczeństwa (np. SQL Injection, wycieki kluczy) w czasie rzeczywistym.
-2.  **Coverage Engine**: Automatyczna analiza pokrycia testami za pomocą **Pytest-cov**. Wykrywa "martwe strefy" kodu, dla których Phoenix musi wygenerować testy.
-3.  **DAST / Penetration**: Wykorzystuje moduł **RAE-Hive (Playwright)** do aktywnego testowania interfejsów i API pod kątem nieautoryzowanego dostępu.
+1.  **SAST (Static Analysis)**: Integrated **Bandit** engine detecting security vulnerabilities (e.g., SQL Injection, key leaks) in real-time.
+2.  **Coverage Engine**: Automatic test coverage analysis using **Pytest-cov**. Identifies "dead zones" in the code for which Phoenix must generate tests.
+3.  **DAST / Penetration**: Utilizes the **RAE-Hive (Playwright)** module for active testing of interfaces and APIs against unauthorized access.
 
-## 🔄 Pętla Kaizen
-RAE-Quality nie tylko raportuje błędy, ale aktywnie uczestniczy w ich naprawie:
-1.  **Wykrycie**: Skaner znajduje słaby punkt.
-2.  **Zgłoszenie**: Raport trafia do **RAE-Lab** i **RAE-Memory**.
-3.  **Inicjacja Poprawki**: System wyzwala zadanie dla Phoenixa, aby naprawił błąd lub dopisał brakujące testy.
+## 🔄 Kaizen Loop
+RAE-Quality not only reports errors but actively participates in fixing them:
+1.  **Detection**: The scanner finds a weak point.
+2.  **Report**: The report is sent to **RAE-Lab** and **RAE-Memory**.
+3.  **Initiation**: The system triggers a task for Phoenix to fix the error or write missing tests.
 
-## 📊 Telemetria i Audyt
-Pełna zgodność z **ISO 27001**. Każdy skan jest logowany z unikalnym identyfikatorem, a metryki jakości są przesyłane do centralnego systemu monitoringu.
+## 📊 Telemetry & Audit
+Full **ISO 27001** compliance. Every scan is logged with a unique identifier, and quality metrics are transmitted to the central monitoring system.
 
 ---
 **Module Status**: Production Ready

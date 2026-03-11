@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+mcp
+sse-starlette
+requests
+pydantic
+bandit
+pytest
+pytest-cov

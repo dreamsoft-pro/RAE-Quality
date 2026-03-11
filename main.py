@@ -1,43 +1,31 @@
 # main.py
 import asyncio
 import logging
+import time
 from engines.security.sast import SastSecurityEngine
 from engines.testing.coverage import CoverageEngine
-from models.report import ScanReport
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("RAE-Quality")
 
 async def audit_project(path: str):
-    logger.info(f"--- 🛡️ Starting Enterprise Audit for: {path} ---")
-    
-    # 1. Run Security Scan
-    sast = SastSecurityEngine(path)
-    security_report = await sast.run()
-    logger.info(f"Security Score: {security_report.score}")
+    logger.info(f"--- 🛡️ Auditing: {path} ---")
+    try:
+        sast = SastSecurityEngine(path)
+        await sast.run()
+        testing = CoverageEngine(path)
+        await testing.run()
+    except Exception as e:
+        logger.error(f"Audit failed for {path}: {e}")
 
-    # 2. Run Coverage Scan
-    testing = CoverageEngine(path)
-    test_report = await testing.run()
-    logger.info(f"Testing Score: {test_report.score}")
-
-    # TODO: In future - Performance & Penetration tests here
-
-    # Final Summary for Lab
-    logger.info("Audit cycle completed. Reporting to RAE-Lab...")
-    # Tutaj symulacja zapisu do labu
-    return {
-        "security": security_report.dict(),
-        "testing": test_report.dict()
-    }
-
-async def main():
-    projects = [
-        "/home/print/cloud/billboard-marker",
-        "/home/print/cloud/screenwatcher_project"
-    ]
-    for p in projects:
-        await audit_project(p)
+async def daemon_loop():
+    projects = ["/home/print/cloud/billboard-marker", "/home/print/cloud/screenwatcher_project"]
+    logger.info("🚀 RAE-Quality Sentinel ACTIVE (Kaizen Loop)")
+    while True:
+        for p in projects:
+            await audit_project(p)
+        logger.info("☕ Audit cycle complete. Sleeping for 1 hour...")
+        await asyncio.sleep(3600)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(daemon_loop())

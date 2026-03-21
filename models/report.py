@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 from enum import Enum
+from uuid import UUID, uuid4
 
 class Severity(str, Enum):
     LOW = "low"
@@ -10,8 +11,14 @@ class Severity(str, Enum):
     HIGH = "high"
     CRITICAL = "critical"
 
+class Verdict(str, Enum):
+    PASSED = "PASSED"
+    REJECTED = "REJECTED"
+    ESCALATED = "ESCALATED"
+    ERROR = "ERROR"
+
 class QualityIssue(BaseModel):
-    id: str
+    id: str = Field(default_factory=lambda: str(uuid4())[:8])
     engine: str
     severity: Severity
     message: str
@@ -19,16 +26,22 @@ class QualityIssue(BaseModel):
     line_number: Optional[int] = None
     fix_suggestion: Optional[str] = None
 
+class AuditResult(BaseModel):
+    audit_id: UUID = Field(default_factory=uuid4)
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    verdict: Verdict
+    confidence: float = Field(ge=0.0, le=1.0)
+    score: float = Field(ge=0.0, le=1.0)
+    issues: List[QualityIssue] = []
+    reasoning: str
+    tier_reached: int = 1
+    metadata: Dict[str, Any] = {}
+
 class ScanReport(BaseModel):
     project_id: str
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-    score: float # 0.0 to 1.0
+    score: float 
     issues: List[QualityIssue]
     metrics: Dict[str, Any]
+    verdict: Optional[Verdict] = None
     meta: Dict[str, Any] = {}
-
-class TestResult(BaseModel):
-    test_name: str
-    status: str # passed, failed, skipped
-    duration: float
-    error_log: Optional[str] = None

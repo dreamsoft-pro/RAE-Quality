@@ -37,14 +37,14 @@ class SastSecurityEngine(BaseQualityEngine):
 
             score = 1.0 - (len(issues) * 0.05) # Prosty algorytm punktacji
             return ScanReport(
-                project_id=self.project_path.split("/")[-1],
+                project=self.project_path.split("/")[-1],
                 score=max(0.0, score),
                 issues=issues,
                 metrics={"vulnerabilities_found": len(issues)}
             )
         except Exception as e:
             self.logger.error(f"SAST failed: {e}")
-            return ScanReport(project_id="error", score=0.0, issues=[], metrics={"error": str(e)})
+            return ScanReport(project="error", score=0.0, issues=[], metrics={"error": str(e)})
 
     def _map_severity(self, bandit_sev: str) -> Severity:
         mapping = {

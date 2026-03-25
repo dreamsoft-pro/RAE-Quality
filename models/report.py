@@ -38,7 +38,7 @@ class AuditResult(BaseModel):
     metadata: Dict[str, Any] = {}
 
 class ScanReport(BaseModel):
-    project_id: str
+    project: str
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     score: float 
     issues: List[QualityIssue]

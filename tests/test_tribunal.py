@@ -8,7 +8,7 @@ from models.report import Verdict, Severity
 async def test_tier1_rejects_todo(sample_code):
     """Tier 1 should immediately reject code with TODOs."""
     tribunal = QualityTribunal()
-    result = await tribunal.run_audit(sample_code, project_id="test-proj")
+    result = await tribunal.run_audit(sample_code, project="test-proj")
     
     assert result.verdict == Verdict.REJECTED
     assert result.tier_reached == 1
@@ -32,7 +32,7 @@ async def test_tier2_passes_clean_code(clean_code, mock_rae_api):
     mock_rae_api.return_value = mock_response
     
     tribunal = QualityTribunal()
-    result = await tribunal.run_audit(clean_code, project_id="test-proj", importance="medium")
+    result = await tribunal.run_audit(clean_code, project="test-proj", importance="medium")
     
     assert result.verdict == Verdict.PASSED
     assert result.tier_reached == 2
@@ -54,7 +54,7 @@ async def test_tier3_escalation_for_critical(clean_code, mock_rae_api):
     mock_rae_api.side_effect = [t2_resp, t2_resp, t3_resp] # Guidelines retrieval + T2 + T3
     
     tribunal = QualityTribunal()
-    result = await tribunal.run_audit(clean_code, project_id="test-proj", importance="critical")
+    result = await tribunal.run_audit(clean_code, project="test-proj", importance="critical")
     
     assert result.verdict == Verdict.PASSED
     assert result.tier_reached == 3

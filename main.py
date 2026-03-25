@@ -27,7 +27,7 @@ class QualitySentinel:
         self.tribunal = QualityTribunal()
         self.api_url = "http://rae-api-dev:8000"
 
-    async def _enforce_verdict(self, result: AuditResult, code: str, project_id: str):
+    async def _enforce_verdict(self, result: AuditResult, code: str, project: str):
         """Autonomously triggers Phoenix repair if code is rejected."""
         if result.verdict == Verdict.REJECTED:
             logger.warning("enforcement_triggered", reason="Code rejected by Tribunal. Waking up Phoenix.")
@@ -38,13 +38,13 @@ class QualitySentinel:
                         "source_agent": "rae-quality",
                         "target_agent": "rae-phoenix",
                         "payload": {
-                            "project_id": project_id,
+                            "project": project,
                             "faulty_code": code,
                             "tribunal_reasoning": result.reasoning,
                             "issues": [issue.dict() for issue in result.issues],
                             "instruction": "URGENT: Fix the provided code based on the Tribunal's reasoning to pass the Quality Gate."
                         }
-                    }, headers={"X-Tenant-Id": "system-governance", "X-Project-Id": project_id})
+                    }, headers={"X-Tenant-Id": "system-governance", "X-Project-Id": project})
             except Exception as e:
                 logger.error("enforcement_dispatch_failed", error=str(e))
 
@@ -60,12 +60,12 @@ class QualitySentinel:
         return f"Audit complete. Security Score: {sast_report.score}, Coverage Score: {test_report.score}"
 
     @audited_operation(operation_name="run_tribunal_audit", impact_level="high")
-    async def perform_tribunal_audit(self, code: str, project_id: str, importance: str = "medium") -> AuditResult:
+    async def perform_tribunal_audit(self, code: str, project: str, importance: str = "medium") -> AuditResult:
         """Executes the advanced 3-tier tribunal audit and enforces policy."""
-        result = await self.tribunal.run_audit(code, project_id, importance)
+        result = await self.tribunal.run_audit(code, project, importance)
         
         # Faza 4: Aktywna Interwencja (Autonomia)
-        asyncio.create_task(self._enforce_verdict(result, code, project_id))
+        asyncio.create_task(self._enforce_verdict(result, code, project))
         
         return result
 
@@ -94,10 +94,10 @@ async def handle_list_tools():
                 "type": "object",
                 "properties": {
                     "code": {"type": "string"},
-                    "project_id": {"type": "string"},
+                    "project": {"type": "string"},
                     "importance": {"type": "string", "enum": ["low", "medium", "critical"]}
                 },
-                "required": ["code", "project_id"]
+                "required": ["code", "project"]
             }
         )
     ]
@@ -111,7 +111,7 @@ async def handle_call_tool(name: str, arguments: dict):
     
     if name == "run_tribunal_audit":
         code = arguments.get("code")
-        project = arguments.get("project_id")
+        project = arguments.get("project")
         importance = arguments.get("importance", "medium")
         result = await sentinel.perform_tribunal_audit(code, project, importance)
         return [TextContent(type="text", text=result.json())]
@@ -131,7 +131,7 @@ async def mcp_sse_endpoint(request: Request):
 async def api_tribunal_audit(payload: dict):
     """External API endpoint for RAE Suite to request semantic audits."""
     code = payload.get("code")
-    project = payload.get("project_id")
+    project = payload.get("project")
     importance = payload.get("importance", "medium")
     return await sentinel.perform_tribunal_audit(code, project, importance)
 

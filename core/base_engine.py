@@ -18,4 +18,4 @@ class BaseQualityEngine(ABC):
     def report_to_lab(self, report: ScanReport):
         """Przesyła raport do RAE-Lab dla analizy Kaizen."""
         # W przyszłości: API call do RAE-Lab
-        self.logger.info(f"Report generated for {report.project_id} with score {report.score}")
+        self.logger.info(f"Report generated for {report.project} with score {report.score}")

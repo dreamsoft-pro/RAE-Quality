@@ -15,9 +15,9 @@ class QualityTribunal:
         self.api_url = rae_api_url or os.getenv("RAE_API_URL", "http://rae-api-dev:8000")
         self.timeout = httpx.Timeout(120.0, connect=10.0)
 
-    async def run_audit(self, code: str, project_id: str, importance: str = "medium") -> AuditResult:
+    async def run_audit(self, code: str, project: str, importance: str = "medium") -> AuditResult:
         """Executes the full 3-tier audit pipeline."""
-        logger.info(f"tribunal_audit_started: project={project_id}, importance={importance}")
+        logger.info(f"tribunal_audit_started: project={project}, importance={importance}")
         
         # --- TIER 1: Deterministic Guards ---
         t1_result = self._run_tier1_checks(code)
@@ -25,12 +25,12 @@ class QualityTribunal:
             return t1_result
 
         # --- TIER 2: Local Semantic Consensus (Context-Aware) ---
-        t2_result = await self._run_tier2_consensus(code, project_id)
+        t2_result = await self._run_tier2_consensus(code, project)
         if t2_result.verdict == Verdict.REJECTED or importance != "critical":
             return t2_result
 
         # --- TIER 3: Supreme Court (SaaS Escalation via Bridge) ---
-        return await self._run_tier3_escalation(code, project_id, t2_result)
+        return await self._run_tier3_escalation(code, project, t2_result)
 
     def _run_tier1_checks(self, code: str) -> AuditResult:
         """Fast, static, and deterministic checks."""
@@ -46,11 +46,11 @@ class QualityTribunal:
         
         return AuditResult(verdict=Verdict.PASSED, confidence=1.0, score=1.0, reasoning="Passed Tier 1 static guards.", tier_reached=1)
 
-    async def _run_tier2_consensus(self, code: str, project_id: str) -> AuditResult:
+    async def _run_tier2_consensus(self, code: str, project: str) -> AuditResult:
         """Semantic review using Local LLM with Memory Context."""
         try:
             # 1. Fetch guidelines from RAE Memory (Semantic Layer)
-            guidelines = await self._fetch_project_guidelines(project_id)
+            guidelines = await self._fetch_project_guidelines(project)
             
             # 2. Construct Prompt for Local LLM (Ollama via Bridge or Direct)
             prompt = f"""
@@ -88,9 +88,9 @@ class QualityTribunal:
             logger.error("tier2_failed", error=str(e))
             return AuditResult(verdict=Verdict.ERROR, confidence=0.0, score=0.0, reasoning=f"Tier 2 Exception: {str(e)}", tier_reached=2)
 
-    async def _run_tier3_escalation(self, code: str, project_id: str, t2_result: AuditResult) -> AuditResult:
+    async def _run_tier3_escalation(self, code: str, project: str, t2_result: AuditResult) -> AuditResult:
         """High-level reasoning using SaaS Models (Gemini/GPT-4) via Bridge."""
-        logger.warning(f"tier3_escalation_initiated: project={project_id}")
+        logger.warning(f"tier3_escalation_initiated: project={project}")
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 resp = await client.post(f"{self.api_url}/v2/bridge/interact", json={
@@ -98,7 +98,7 @@ class QualityTribunal:
                     "target_agent": "rae-oracle-gemini",
                     "payload": {
                         "code": code,
-                        "project": project_id,
+                        "project": project,
                         "previous_reasoning": t2_result.reasoning
                     }
                 })
@@ -117,13 +117,13 @@ class QualityTribunal:
         except Exception as e:
             return AuditResult(verdict=Verdict.ERROR, confidence=0.0, score=0.0, reasoning=f"Tier 3 Exception: {str(e)}", tier_reached=3)
 
-    async def _fetch_project_guidelines(self, project_id: str) -> str:
+    async def _fetch_project_guidelines(self, project: str) -> str:
         """Retrieves project-specific coding standards from RAE Memory."""
         try:
             async with httpx.AsyncClient() as client:
                 resp = await client.post(f"{self.api_url}/v2/memories/query", json={
                     "query": "coding standards and architectural guidelines",
-                    "project": project_id,
+                    "project": project,
                     "k": 3
                 })
                 if resp.status_code == 200:

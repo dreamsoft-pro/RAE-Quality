@@ -47,13 +47,13 @@ class CoverageEngine(BaseQualityEngine):
                 
                 score = total_cov / 100.0
                 return ScanReport(
-                    project_id=self.project_path.split("/")[-1],
+                    project=self.project_path.split("/")[-1],
                     score=score,
                     issues=issues,
                     metrics=metrics
                 )
             
-            return ScanReport(project_id="none", score=0.0, issues=[], metrics={"error": "Coverage data not found"})
+            return ScanReport(project="none", score=0.0, issues=[], metrics={"error": "Coverage data not found"})
             
         except Exception as e:
-            return ScanReport(project_id="error", score=0.0, issues=[], metrics={"error": str(e)})
+            return ScanReport(project="error", score=0.0, issues=[], metrics={"error": str(e)})
